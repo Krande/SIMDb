@@ -1,0 +1,32 @@
+name: simdb-dev
+channels:
+  - krande
+  - conda-forge
+dependencies:
+  - ada-py
+  - occt==7.6.2
+  - python==3.10.6
+  - pyparsing
+  - pytest
+  - toposort
+  - httpx
+  - fastapi
+  - uvicorn
+  - hpp-fcl
+  - starlette
+  - vtk==9.2.2
+  - pip
+  - pip:
+      - edgedb
+      - rdflib
+      - fastapi-azure-auth
+      - azure-storage-queue
+      - azure-identity
+      - pydantic[dotenv]
+      - fake-bpy-module-3.2
+      - anyio[trio]
+      - python-multipart
+      - frozendict
+      - deepdiff
+      - trame
+      - pandas
