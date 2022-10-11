@@ -1,6 +1,6 @@
 # SIMDb - Simulation Database
 
-An attempt to house all relevant simulation data using EdgeDB.
+An attempt to host computational simulation data using EdgeDB.
 
 The first priority will be to establish a data structure for 
 simulation data from Finite Element analysis. 
