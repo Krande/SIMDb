@@ -1,0 +1,11 @@
+name: simdb-dev
+channels:
+  - krande
+  - conda-forge
+dependencies:
+  - pyvista
+  - websockets
+  - python-dotenv
+  - azure-storage-blob
+  - vtk
+  - pytest
