@@ -1,9 +1,11 @@
 name: simdb-dev
 channels:
-  - krande
   - conda-forge
 dependencies:
   - trame
+  - fastapi
+  - uvicorn
+  - meshio
   - pyvista
   - websockets
   - python-dotenv
