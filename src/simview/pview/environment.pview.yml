@@ -1,0 +1,6 @@
+name: pview
+channels:
+  - conda-forge
+dependencies:
+  - paraview
+  - websockets
