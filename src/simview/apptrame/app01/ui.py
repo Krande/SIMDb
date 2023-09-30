@@ -11,8 +11,8 @@ from trame.widgets import vtk, vuetify, trame
 # Required for interactor initialization
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleSwitch  # noqa
 
-from simview.app.callbacks import ViewCalls, Representation, LookupTable, actives_change
-from simview.app.data import VtkData
+from simview.apptrame.callbacks import ViewCalls, Representation, LookupTable, actives_change
+from simview.apptrame.data import VtkData
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

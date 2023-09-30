@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from vtkmodules.vtkCommonDataModel import vtkDataObject
 
-from simview.app.data import LookupTable, Representation, VtkData
+from simview.apptrame.data import LookupTable, Representation, VtkData
 from trame.app import get_server
 
 server = get_server()

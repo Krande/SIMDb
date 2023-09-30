@@ -5,10 +5,17 @@ dependencies:
   - trame
   - fastapi
   - uvicorn
+  - pandas
   - meshio
   - pyvista
+  - dash
+  - flask
   - websockets
   - python-dotenv
   - azure-storage-blob
   - vtk
   - pytest
+  - pip
+  - pip:
+      - dash-vtk
+      - dash-bootstrap-components

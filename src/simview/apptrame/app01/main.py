@@ -5,9 +5,9 @@ import vtkmodules.vtkRenderingOpenGL2  # noqa
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleSwitch  # noqa
 from trame.app import get_server
 
-from simview.app.callbacks import ViewCalls
-from simview.app.ui import VtkGui
-from simview.app.data import VtkData
+from simview.apptrame.callbacks import ViewCalls
+from simview.apptrame.ui import VtkGui
+from simview.apptrame.data import VtkData
 
 
 def initialize():
