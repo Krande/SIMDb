@@ -9,6 +9,9 @@ dependencies:
   - meshio
   - pyvista
   - dash
+  - pygfx
+  - imageio
+  - pyglfw
   - flask
   - websockets
   - python-dotenv
