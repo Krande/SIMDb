@@ -18,6 +18,7 @@ dependencies:
   - azure-storage-blob
   - vtk
   - pytest
+  - watchdog
   - pip
   - pip:
       - dash-vtk

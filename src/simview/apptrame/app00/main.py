@@ -1,14 +1,23 @@
-r"""
-Version for trame 1.x - https://github.com/Kitware/trame/blob/release-v1/examples/PlainPython/ClientOnlyVTK/app.py
-Delta v1..v2          - https://github.com/Kitware/trame/commit/33f52b6bb9eb73129b181699a94be9ad86187d49
-
-Installation requirements:
-    pip install trame trame-vuetify trame-vtk
-"""
-
 from trame.app import get_server
-from trame.ui.vuetify import SinglePageLayout
-from trame.widgets import vuetify, vtk as vtk_widgets
+from trame_vuetify.ui.vuetify import SinglePageWithDrawerLayout
+from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+
+from simview.apptrame.app00.file_reader import read_file
+from simview.apptrame.app00.filewatcher import start_monitoring
+from simview.apptrame.app00.representation import update_representation, create_render_window
+from simview.apptrame.app00.sec_content import main_window
+from simview.apptrame.app00.sec_drawer import drawer_main
+from simview.apptrame.app00.sec_toolbar import toolbar_main
+
+vtk_grid = vtkUnstructuredGrid()
+use_actor = False
+
+curr_mesh = read_file(vtk_grid)
+
+render_window = None
+actor = None
+if use_actor:
+    actor, render_window = create_render_window(vtk_grid)
 
 # -----------------------------------------------------------------------------
 # Trame setup
@@ -16,38 +25,51 @@ from trame.widgets import vuetify, vtk as vtk_widgets
 
 server = get_server()
 state, ctrl = server.state, server.controller
-
+server.hot_reload = True
 # -----------------------------------------------------------------------------
 # Web App setup
 # -----------------------------------------------------------------------------
 
-state.trame__title = "VTK Rendering"
+state.trame__title = "FEA Results"
 
-with SinglePageLayout(server) as layout:
-    with layout.content:
-        with vuetify.VContainer(fluid=True, classes="pa-0 fill-height"):
-            with vtk_widgets.VtkView(ref="view"):
-                with vtk_widgets.VtkGeometryRepresentation():
-                    vtk_widgets.VtkAlgorithm(
-                        vtk_class="vtkConeSource", state=("{ resolution }",)
-                    )
 
-    with layout.toolbar:
-        vuetify.VSpacer()
-        vuetify.VSlider(
-            hide_details=True,
-            v_model=("resolution", 6),
-            max=60,
-            min=3,
-            step=1,
-            style="max-width: 300px;",
-        )
-        vuetify.VSwitch(
-            hide_details=True,
-            v_model=("$vuetify.theme.dark",),
-        )
-        with vuetify.VBtn(icon=True, click="$refs.view.resetCamera()"):
-            vuetify.VIcon("mdi-crop-free")
+@state.change("mesh_representation")
+def update_mesh_representation(mesh_representation, **kwargs):
+    if use_actor:
+        update_representation(actor, mesh_representation)
+        ctrl.view_update()
+    else:
+
+        ctrl.mesh_update()
+    print(mesh_representation)
+
+
+@state.change("resolution")
+def update_source(resolution=6, **kwargs):
+    print(resolution)
+    # mesh.warp_by_vector(factor=resolution)
+    print('copy')
+    # vtk_grid.DeepCopy(mesh)
+    # ctrl.mesh_update()
+
+
+@ctrl.trigger("download_binary")
+def download():
+    return server.protocol.addAttachment(curr_mesh.filepath.read_bytes())
+
+
+@ctrl.set("update_ui")
+def update_ui():
+    with SinglePageWithDrawerLayout(server) as layout:
+        layout.title.set_text("FEA Results")
+
+        main_window(layout, ctrl, vtk_grid, use_actor, render_window)
+        toolbar_main(layout, curr_mesh)
+        drawer_main(layout)
+
+
+update_ui()
+# start_monitoring()
 
 if __name__ == "__main__":
-    server.start()
+    server.start(open_browser=False)
