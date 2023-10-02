@@ -2,11 +2,10 @@ from trame.app import get_server
 from trame_vuetify.ui.vuetify import SinglePageWithDrawerLayout
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
-from simview.apptrame.app00.file_reader import read_file
-from simview.apptrame.app00.filewatcher import start_monitoring
 from simview.apptrame.app00.representation import update_representation, create_render_window
 from simview.apptrame.app00.sec_content import main_window
 from simview.apptrame.app00.sec_drawer import drawer_main
+from simview.apptrame.app00.sec_file_reader import read_file
 from simview.apptrame.app00.sec_toolbar import toolbar_main
 
 vtk_grid = vtkUnstructuredGrid()

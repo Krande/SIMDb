@@ -3,6 +3,7 @@ from trame.widgets import vuetify
 
 from simview.apptrame.app00.plotter import PLOTS
 from simview.apptrame.app00.representation import Representation
+from simview.apptrame.app00.sec_file_reader import file_reader_main
 
 server = get_server()
 state, ctrl = server.state, server.controller
@@ -17,6 +18,7 @@ def drawer_main(layout):
     with layout.drawer as drawer:
         drawer.width = 325
 
+        file_reader_main()
         with vuetify.VRow(classes="pt-2", dense=True):
             vuetify.VSelect(
                 # Representation
@@ -47,3 +49,6 @@ def drawer_main(layout):
                 outlined=True,
                 classes="pt-1",
             )
+
+
+

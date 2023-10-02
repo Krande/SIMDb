@@ -13,6 +13,7 @@ def main_window(layout, ctrl, vtk_grid, use_actor, render_window):
                 )
                 ctrl.figure_update = figure.update
                 vuetify.VSpacer()
+
             with vuetify.VRow(dense=True, style="height: 70%"):
                 with vtk_widgets.VtkView(ref="view"):
                     if use_actor:
