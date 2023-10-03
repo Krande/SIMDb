@@ -1,0 +1,11 @@
+trame:
+  cmd:
+    - python
+    - main.py
+    - --host
+    - ${host}
+    - --port
+    - ${port}
+    - --authKey
+    - ${secret}
+    - --server
