@@ -58,6 +58,7 @@ renderWindowInteractor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
 
 filter_mapper = vtkDataSetMapper()
 filter_mapper.SetInputConnection(vtk_filter.GetOutputPort())
+
 filter_actor = vtkActor()
 filter_actor.SetMapper(filter_mapper)
 renderer.AddActor(filter_actor)
@@ -70,6 +71,7 @@ filter_mapper.SetLookupTable(lut)
 mesh_mapper = vtkDataSetMapper()
 mesh_mapper.SetInputData(vtk_grid)
 mesh_mapper.SetScalarVisibility(0)
+
 mesh_actor = vtkActor()
 mesh_actor.SetMapper(mesh_mapper)
 renderer.AddActor(mesh_actor)

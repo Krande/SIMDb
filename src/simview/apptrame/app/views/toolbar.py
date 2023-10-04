@@ -19,7 +19,7 @@ def toolbar_main(app: App):
     with vuetify.VBtn(icon=True, click=(click_me, "['edit',]")):
         vuetify.VIcon("mdi-cursor-default-click")
 
-    curr_mesh = app.model.current_mesh
+    curr_mesh = app.model.mesh_source
     if curr_mesh is not None:
         with vuetify.VBtn(icon=True,
                           click=f"utils.download('{curr_mesh.blob.name}', trigger('download_binary'), 'application/octet-stream')", ):

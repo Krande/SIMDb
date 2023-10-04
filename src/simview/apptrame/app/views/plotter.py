@@ -47,9 +47,14 @@ def scatter():
 
 
 def table():
-    fig = go.Figure(data=[go.Table(header=dict(values=['Mode #', 'Eigenvalue [Hz]']),
-                                   cells=dict(values=[[100, 90, 80, 90], [95, 85, 75, 95]]))
-                          ])
+    fig = go.Figure(
+        data=[
+            go.Table(
+                header=dict(values=["Mode #", "Eigenvalue [Hz]"]),
+                cells=dict(values=[[100, 90, 80, 90], [95, 85, 75, 95]]),
+            )
+        ]
+    )
     return fig
 
 
@@ -70,16 +75,3 @@ def plotter_window(ctrl):
     )
     ctrl.figure_update = figure.update
     vuetify.VSpacer()
-
-
-def plotter_drawer():
-    with vuetify.VRow(classes="pt-2", dense=True):
-        vuetify.VSelect(
-            label="Plot",
-            v_model=("active_plot", "Table"),
-            items=("plots", list(PLOTS.keys())),
-            hide_details=True,
-            dense=True,
-            outlined=True,
-            classes="pt-1",
-        )

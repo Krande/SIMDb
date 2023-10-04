@@ -2,37 +2,36 @@ import os
 
 from trame.app import get_server
 from trame.decorators import TrameApp, trigger, controller, change, life_cycle
-from trame.widgets import vuetify, trame as trame_widget
+from trame.widgets import vuetify, router
 from trame_vuetify.ui.vuetify import SinglePageWithDrawerLayout
+from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
 
 from simview.apptrame.app.filewatcher import start_monitoring
-from simview.apptrame.app.views.file_reader import ModelDataStore, file_reader_main
-from simview.apptrame.app.views.plotter import plotter_window, PLOTS, plotter_drawer
-from simview.apptrame.app.views.representation import update_representation, create_render_window, representation_drawer
+from simview.apptrame.app.model_store import ModelDataStore
+from simview.apptrame.app.views.draw_models import file_reader_main
+from simview.apptrame.app.views.draw_plotter import plotter_drawer
+from simview.apptrame.app.views.draw_repr import representation_drawer
+from simview.apptrame.app.views.plotter import PLOTS
+from simview.apptrame.app.representation import update_representation, create_render_window
 from simview.apptrame.app.views.toolbar import toolbar_main
-from simview.apptrame.app.views.viewer import view3d_window
+from simview.apptrame.app.views.viewer import content_routers
 
 os.environ["TRAME_DISABLE_V3_WARNING"] = "1"
 
 
 @TrameApp()
 class App:
-    def __init__(self, name=None, use_actor=False, monitor=False):
+    def __init__(self, name=None, monitor=False):
         self.server = get_server(name)
+
         self.server.state.setdefault("active_ui", "geometry")
         self.server.state.setdefault("active_content", "Table")
-        self.use_actor = use_actor
 
         model = ModelDataStore(self.server)
-        model.load_files_from_storage_blob()
-        model.download_file()
+        model.init()
 
         self.model = model
-        self.actor = None
-        self.render_window = None
-
-        if use_actor:
-            self.actor, self.render_window = create_render_window(self.model)
+        self.render_window = create_render_window(self.model)
 
         if monitor:
             start_monitoring(self.server)
@@ -49,7 +48,7 @@ class App:
 
     @trigger("download_binary")
     def download(self):
-        return self.server.protocol.addAttachment(self.model.current_mesh.blob.blob.download_blob().readall())
+        return self.server.protocol.addAttachment(self.model.mesh_source.blob.blob.download_blob().readall())
 
     @trigger("exec")
     def method_call(self, msg):
@@ -69,11 +68,7 @@ class App:
 
     @change("resolution")
     def one_slider(self, resolution, **kwargs):
-        print("Slider value 1", resolution)
-
-    @change("active_model")
-    def load_current_file(self, **kwargs):
-        self.model.download_file()
+        print("Slider value:", resolution)
 
     @change("active_plot")
     def update_plot(self, active_plot, **kwargs):
@@ -82,47 +77,47 @@ class App:
 
     @change("mesh_representation")
     def update_mesh_representation(self, mesh_representation=3, **kwargs):
-        if self.use_actor:
-            update_representation(self.actor, mesh_representation)
-            self.ctrl.view_update()
-        else:
-            self.ctrl.mesh_update()
+        update_representation(self.model.mesh_actor, mesh_representation)
+        self.ctrl.view_update()
         print(f"{mesh_representation=}")
 
     @change("mesh_opacity")
     def update_mesh_opacity(self, mesh_opacity, **kwargs):
-        self.actor.GetProperty().SetOpacity(mesh_opacity)
+        self.model.mesh_actor.GetProperty().SetOpacity(mesh_opacity)
         self.ctrl.view_update()
 
     @life_cycle.server_ready
     def on_ready(self, *args, **kwargs):
         print("on_ready")
+        self.ctrl.view_update()
 
     @life_cycle.client_connected
     def on_client_connected(self, *args, **kwargs):
         print("on_client_connected")
 
-    @change("contour_representation")
-    def update_contour_representation(self, contour_representation, **kwargs):
-        if self.actor is None:
-            return
-        update_representation(self.model.contour_actor, contour_representation)
+    @change("scalar_range")
+    def set_scalar_range(self, scalar_range=(-1, 1), **kwargs):
+        fields = self.model.mesh_source.fields
+        if scalar_range is None:
+            scalar_range = fields.default_min, fields.default_max
+
+        print("set_scalar_range", scalar_range)
+
+        self.model.filter_actor.GetMapper().SetScalarRange(scalar_range)
+        fields.vtk_filter.SetLowerThreshold(scalar_range[0])
+        fields.vtk_filter.SetUpperThreshold(scalar_range[1])
+
         self.ctrl.view_update()
 
     def ui(self):
+        content_routers(self)
+
         with SinglePageWithDrawerLayout(self.server) as layout:
             layout.title.set_text(self.server.name)
 
-            # Let the server know the browser pixel ratio
-            trame_widget.ClientTriggers(mounted="pixel_ratio = window.devicePixelRatio")
-
             with layout.content:
                 with vuetify.VContainer(fluid=True, classes="pa-0 fill-height"):
-                    with vuetify.VRow(dense=True, style="height: 30%"):
-                        plotter_window(self.ctrl)
-                    # vuetify.VDivider(vertical=False, classes="mx-2")
-                    with vuetify.VRow(dense=True, style="height: 70%"):
-                        view3d_window(self.ctrl, self.model.vtk_grid, self.use_actor, self.render_window)
+                    router.RouterView(style="width: 100%; height: 100%")
 
             with layout.toolbar as toolbar:
                 toolbar.dense = True
@@ -137,6 +132,6 @@ class App:
 
 
 if __name__ == "__main__":
-    app = App("FEA Results", use_actor=True)
+    app = App("FEA Results")
     app.server.start(open_browser=False)
     # check_and_open_webpage("http://localhost:8080", "Trame")

@@ -1,18 +1,31 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 # Required for rendering initialization, not necessary for
 # local rendering, but doesn't hurt to include it
 import vtkmodules.vtkRenderingOpenGL2  # noqa
-from trame.widgets import vtk as vtk_widgets
+from trame.widgets import vtk as vtk_widgets, vuetify
+from trame_router.ui.router import RouterViewLayout
+
+from simview.apptrame.app.views.plotter import plotter_window
+
+if TYPE_CHECKING:
+    from simview.apptrame.app.main import App
 
 
-def view3d_window(ctrl, vtk_grid, use_actor, render_window):
-    if use_actor:
-        with vtk_widgets.VtkLocalView(render_window) as view:
-            ctrl.view_update.add(view.update)
-            ctrl.on_server_ready.add(view.update)
-    else:
-        with vtk_widgets.VtkView(ref="view"):
-            with vtk_widgets.VtkGeometryRepresentation():
-                mesh = vtk_widgets.VtkMesh("mesh", dataset=vtk_grid)
-                ctrl.mesh_update = mesh.update
-                ctrl.mesh_reset_camera = mesh.reset_camera
-                # ctrl.on_server_ready.add(mesh.update)
+def content_routers(app: App):
+    with RouterViewLayout(app.server, "/"):
+        with vtk_widgets.VtkLocalView(app.render_window) as view:
+            app.ctrl.view_update.add(view.update)
+            app.ctrl.on_server_ready.add(view.update)
+
+    with RouterViewLayout(app.server, "/eigen"):
+        with vuetify.VCardText():
+            vuetify.VBtn("Take me back", click="$router.back()")
+        with vuetify.VRow(dense=True, style="height: 30%"):
+            plotter_window(app.ctrl)
+        with vuetify.VRow(dense=True, style="height: 70%"):
+            with vtk_widgets.VtkLocalView(app.render_window) as view:
+                app.ctrl.view_update.add(view.update)
+                app.ctrl.on_server_ready.add(view.update)

@@ -7,15 +7,15 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import azure.storage.blob
-import meshio
 import pyvista as pv
 from dotenv import load_dotenv
-from trame.widgets import vuetify
 from vtkmodules.vtkCommonDataModel import vtkDataObject, vtkUnstructuredGrid
+from vtkmodules.vtkFiltersCore import vtkThreshold
+from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
+from vtkmodules.vtkRenderingCore import vtkActor
 
 if TYPE_CHECKING:
     from trame_server import Server
-
 load_dotenv()
 
 
@@ -32,13 +32,12 @@ class Fields:
     default_array: dict
     default_min: float
     default_max: float
+    vtk_filter: vtkThreshold = field(default_factory=vtkThreshold)
 
 
 @dataclass
-class Mesh:
+class MeshSource:
     blob: BlobFile
-    mesh: pv.DataSet
-    mmesh: meshio.Mesh
     fields: Fields
 
 
@@ -47,10 +46,11 @@ class ModelDataStore:
     server: Server
     vtk_grid: vtkDataObject = field(default_factory=vtkUnstructuredGrid)
     files: dict[str, BlobFile] = field(default_factory=dict)
-    current_mesh: Mesh = None
-    contour_actor: vtkDataObject = None
+    mesh_source: MeshSource = None
+    filter_actor: vtkDataObject = field(default_factory=vtkActor)
+    mesh_actor: vtkDataObject = field(default_factory=vtkActor)
 
-    def extract_fields(self) -> Fields:
+    def _extract_fields(self) -> Fields:
         dataset_arrays = []
         point_data = self.vtk_grid.GetPointData()
         cell_data = self.vtk_grid.GetCellData()
@@ -73,50 +73,55 @@ class ModelDataStore:
                     }
                 )
 
-        default_array = dataset_arrays[1]
+        default_array = dataset_arrays[0]
         default_min, default_max = default_array.get("range")
-        if default_array.get("type") == vtkDataObject.FIELD_ASSOCIATION_POINTS:
-            self.vtk_grid.GetPointData().SetActiveScalars(default_array.get("text"))
-        else:
-            self.vtk_grid.GetCellData().SetActiveScalars(default_array.get("text"))
 
-        return Fields(datasets=dataset_arrays, default_array=default_array, default_min=default_min,
-                      default_max=default_max)
+        vtk_filter = vtkThreshold()
+        vtk_filter.SetInputData(self.vtk_grid)
+
+        return Fields(
+            datasets=dataset_arrays,
+            default_array=default_array,
+            default_min=default_min,
+            default_max=default_max,
+            vtk_filter=vtk_filter,
+        )
 
     def download_file(self):
         blob = self.files[self.server.state.active_model]
 
-        with tempfile.NamedTemporaryFile(delete=False) as temp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=blob.suffix) as temp:
             temp.write(blob.blob.download_blob().readall())
             temp.seek(0)
 
             filepath = temp.name
 
         try:
-            if blob.suffix == '.rmed':
-                format = "med"
+            if blob.suffix == ".rmed":
+                mesh: pv.DataSet = pv.read_meshio(filepath, "med")
+                self.vtk_grid.ShallowCopy(mesh)
             else:
-                format = blob.suffix[1:]
-
-            mmesh = meshio.read(filepath, format)
-            mesh: pv.DataSet = pv.read_meshio(filepath, format)
+                reader = vtkXMLUnstructuredGridReader()
+                reader.SetFileName(filepath)
+                reader.Update()
+                self.vtk_grid = reader.GetOutput()
         finally:
             os.remove(filepath)  # Manually delete the file
 
-        self.vtk_grid.DeepCopy(mesh)
-        fields = self.extract_fields()
-        self.current_mesh = Mesh(blob=blob, mesh=mesh, mmesh=mmesh, fields=fields)
+        fields = self._extract_fields()
+        self.mesh_source = MeshSource(blob=blob, fields=fields)
 
     def load_files_from_storage_blob(self):
         container_client = azure.storage.blob.ContainerClient.from_connection_string(
-            os.getenv("AZURE_STORAGE_CONNECTION_STRING"), os.getenv('AZURE_STORAGE_CONTAINER_NAME'))
+            os.getenv("AZURE_STORAGE_CONNECTION_STRING"), os.getenv("AZURE_STORAGE_CONTAINER_NAME")
+        )
 
         self.files.clear()
         files = {}
         for blob in container_client.list_blobs():
             blob_client = container_client.get_blob_client(blob.name)
             suffix = pathlib.Path(blob.name).suffix
-            if suffix != '.vtu':
+            if suffix != ".vtu":
                 continue
             files[blob.name] = BlobFile(name=blob.name, suffix=suffix, blob=blob_client)
         self.files.update(files)
@@ -124,19 +129,6 @@ class ModelDataStore:
         if len(self.files) > 0:
             self.server.state.active_model = list(self.files.keys())[0]
 
-
-def file_reader_main(model: ModelDataStore):
-    _files = list(model.files.keys())
-    with vuetify.VRow(classes="pt-2", dense=True):
-        vuetify.VSelect(
-            label="Models",
-            v_model=("active_model", _files[0] if len(_files) > 0 else None),
-            items=("Model", _files),
-            hide_details=True,
-            dense=True,
-            outlined=True,
-            classes="pt-1",
-        )
-
-        # with vuetify.VBtn(icon=True, click=model.download_file):
-        #     vuetify.VIcon("mdi-cursor-default-click")
+    def init(self):
+        self.load_files_from_storage_blob()
+        self.download_file()
