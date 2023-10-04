@@ -83,8 +83,8 @@ def update_grid(nodes_file, elems_file, field_file, **kwargs):
     if not elems_file:
         return
 
-    nodes_bytes = nodes_file.get("content")
-    elems_bytes = elems_file.get("content")
+    nodes_bytes = b''.join(nodes_file.get("content"))
+    elems_bytes = b''.join(elems_file.get("content"))
 
     df_nodes = pd.read_csv(
         io.StringIO(nodes_bytes.decode("utf-8")),
@@ -349,4 +349,4 @@ if args.data:
 # -----------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    server.start()
+    server.start(port=5000)

@@ -1,16 +1,25 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from trame.widgets import vuetify
 
+if TYPE_CHECKING:
+    from simview.apptrame.app.main import App
 
-def clickme():
-    print("You clicked me Update!")
+
+def click_me(*args):
+    print(f"click with {args}")
 
 
-def toolbar_main(curr_mesh):
+def toolbar_main(app: App):
     vuetify.VSpacer()
-    # Icons https://pictogrammers.com/library/mdi/
-    with vuetify.VBtn(icon=True, click=clickme):
+    vuetify.VDivider(vertical=True, classes="mx-2")
+
+    with vuetify.VBtn(icon=True, click=(click_me, "['edit',]")):
         vuetify.VIcon("mdi-cursor-default-click")
 
+    curr_mesh = app.model.current_mesh
     if curr_mesh is not None:
         with vuetify.VBtn(icon=True,
                           click=f"utils.download('{curr_mesh.blob.name}', trigger('download_binary'), 'application/octet-stream')", ):

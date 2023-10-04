@@ -1,20 +1,26 @@
+import os
+
 from trame.app import get_server
 from trame.decorators import TrameApp, trigger, controller, change, life_cycle
 from trame.widgets import vuetify, trame as trame_widget
 from trame_vuetify.ui.vuetify import SinglePageWithDrawerLayout
 
-from simview.apptrame.app00.filewatcher import start_monitoring
-from simview.apptrame.app00.views.representation import update_representation, create_render_window, representation_drawer
-from simview.apptrame.app00.views.file_reader import ModelDataStore, file_reader_main
-from simview.apptrame.app00.views.plotter import plotter_window, PLOTS, plotter_drawer
-from simview.apptrame.app00.views.toolbar import toolbar_main
-from simview.apptrame.app00.views.viewer import view3d_window
+from simview.apptrame.app.filewatcher import start_monitoring
+from simview.apptrame.app.views.file_reader import ModelDataStore, file_reader_main
+from simview.apptrame.app.views.plotter import plotter_window, PLOTS, plotter_drawer
+from simview.apptrame.app.views.representation import update_representation, create_render_window, representation_drawer
+from simview.apptrame.app.views.toolbar import toolbar_main
+from simview.apptrame.app.views.viewer import view3d_window
+
+os.environ["TRAME_DISABLE_V3_WARNING"] = "1"
 
 
 @TrameApp()
 class App:
     def __init__(self, name=None, use_actor=False, monitor=False):
         self.server = get_server(name)
+        self.server.state.setdefault("active_ui", "geometry")
+        self.server.state.setdefault("active_content", "Table")
         self.use_actor = use_actor
 
         model = ModelDataStore(self.server)
@@ -53,6 +59,14 @@ class App:
     def method_on_ctrl(self, *args):
         print("method_on_ctrl", args)
 
+    @trigger("click_me")
+    def click_me(self, *args):
+        print("method_on_ctrl", args)
+
+    @change("active_ui")
+    def active_ui_change(self, active_ui, **kwargs):
+        print(active_ui)
+
     @change("resolution")
     def one_slider(self, resolution, **kwargs):
         print("Slider value 1", resolution)
@@ -73,7 +87,12 @@ class App:
             self.ctrl.view_update()
         else:
             self.ctrl.mesh_update()
-        print(mesh_representation)
+        print(f"{mesh_representation=}")
+
+    @change("mesh_opacity")
+    def update_mesh_opacity(self, mesh_opacity, **kwargs):
+        self.actor.GetProperty().SetOpacity(mesh_opacity)
+        self.ctrl.view_update()
 
     @life_cycle.server_ready
     def on_ready(self, *args, **kwargs):
@@ -105,8 +124,9 @@ class App:
                     with vuetify.VRow(dense=True, style="height: 70%"):
                         view3d_window(self.ctrl, self.model.vtk_grid, self.use_actor, self.render_window)
 
-            with layout.toolbar:
-                toolbar_main(self.model.current_mesh)
+            with layout.toolbar as toolbar:
+                toolbar.dense = True
+                toolbar_main(self)
 
             with layout.drawer as drawer:
                 drawer.width = 325
@@ -119,3 +139,4 @@ class App:
 if __name__ == "__main__":
     app = App("FEA Results", use_actor=True)
     app.server.start(open_browser=False)
+    # check_and_open_webpage("http://localhost:8080", "Trame")

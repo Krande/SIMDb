@@ -1,6 +1,6 @@
 import plotly.express as px
 import plotly.graph_objects as go
-from trame.widgets import vuetify, plotly
+from trame.widgets import vuetify, plotly as plotly_widget
 
 
 def contour_plot():
@@ -47,24 +47,26 @@ def scatter():
 
 
 def table():
-    fig = go.Figure(data=[go.Table(header=dict(values=['A Scores', 'B Scores']),
+    fig = go.Figure(data=[go.Table(header=dict(values=['Mode #', 'Eigenvalue [Hz]']),
                                    cells=dict(values=[[100, 90, 80, 90], [95, 85, 75, 95]]))
                           ])
-    fig.show()
+    return fig
 
 
 PLOTS = {
     "Contour": contour_plot,
     "Bar": bar_plot,
     "Scatter": scatter,
+    "Table": table,
 }
 
 
 def plotter_window(ctrl):
     vuetify.VSpacer()
-    figure = plotly.Figure(
+    figure = plotly_widget.Figure(
         display_logo=False,
         display_mode_bar="true",
+        v_show="active_content == 'Table'",
     )
     ctrl.figure_update = figure.update
     vuetify.VSpacer()
@@ -74,7 +76,7 @@ def plotter_drawer():
     with vuetify.VRow(classes="pt-2", dense=True):
         vuetify.VSelect(
             label="Plot",
-            v_model=("active_plot", "Contour"),
+            v_model=("active_plot", "Table"),
             items=("plots", list(PLOTS.keys())),
             hide_details=True,
             dense=True,

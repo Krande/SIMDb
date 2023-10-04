@@ -75,6 +75,11 @@ class ModelDataStore:
 
         default_array = dataset_arrays[1]
         default_min, default_max = default_array.get("range")
+        if default_array.get("type") == vtkDataObject.FIELD_ASSOCIATION_POINTS:
+            self.vtk_grid.GetPointData().SetActiveScalars(default_array.get("text"))
+        else:
+            self.vtk_grid.GetCellData().SetActiveScalars(default_array.get("text"))
+
         return Fields(datasets=dataset_arrays, default_array=default_array, default_min=default_min,
                       default_max=default_max)
 
@@ -88,14 +93,18 @@ class ModelDataStore:
             filepath = temp.name
 
         try:
-            mmesh = meshio.read(filepath, "med")
-            mesh: pv.DataSet = pv.read_meshio(filepath, "med")
+            if blob.suffix == '.rmed':
+                format = "med"
+            else:
+                format = blob.suffix[1:]
+
+            mmesh = meshio.read(filepath, format)
+            mesh: pv.DataSet = pv.read_meshio(filepath, format)
         finally:
             os.remove(filepath)  # Manually delete the file
 
-        self.vtk_grid.ShallowCopy(mesh)
+        self.vtk_grid.DeepCopy(mesh)
         fields = self.extract_fields()
-        self.vtk_grid.GetCellData().SetActiveScalars(fields.default_array.get("text"))
         self.current_mesh = Mesh(blob=blob, mesh=mesh, mmesh=mmesh, fields=fields)
 
     def load_files_from_storage_blob(self):
@@ -107,6 +116,8 @@ class ModelDataStore:
         for blob in container_client.list_blobs():
             blob_client = container_client.get_blob_client(blob.name)
             suffix = pathlib.Path(blob.name).suffix
+            if suffix != '.vtu':
+                continue
             files[blob.name] = BlobFile(name=blob.name, suffix=suffix, blob=blob_client)
         self.files.update(files)
 
