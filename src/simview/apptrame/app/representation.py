@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonCore import vtkLookupTable
+from vtkmodules.vtkCommonDataModel import vtkDataObject
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
 from vtkmodules.vtkRenderingCore import vtkDataSetMapper, vtkRenderer, vtkRenderWindow, vtkRenderWindowInteractor
@@ -40,40 +41,50 @@ def update_representation(actor, mode):
         property.EdgeVisibilityOn()
 
 
-def create_render_window(model_data: ModelDataStore):
+def create_render_window(model_store: ModelDataStore):
+    filter_actor = model_store.filter_actor
+
+    mesh_actor = model_store.mesh_actor
+
     renderer = vtkRenderer()
     renderer.SetBackground(vtkNamedColors().GetColor3d("SlateGray"))  # SlateGray
+
     render_window = vtkRenderWindow()
     render_window.AddRenderer(renderer)
     render_window.SetWindowName("VTK Test")
 
     render_window_interactor = vtkRenderWindowInteractor()
+    interactor_style = vtkInteractorStyleTrackballCamera()
+    render_window_interactor.SetInteractorStyle(interactor_style)
     render_window_interactor.SetRenderWindow(render_window)
-    render_window_interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
 
-    fields = model_data.mesh_source.fields
+    fields = model_store.fields
     scalar_range = fields.default_min, fields.default_max
 
+    vtk_filter = fields.vtk_filter
+    vtk_filter.SetInputData(model_store.vtk_grid)
+
     filter_mapper = vtkDataSetMapper()
-    filter_mapper.SetInputConnection(fields.vtk_filter.GetOutputPort())
+    filter_mapper.SetInputConnection(vtk_filter.GetOutputPort())
+    vtk_filter.SetInputArrayToProcess(0, 0, 0, vtkDataObject.FIELD_ASSOCIATION_POINTS, fields.default_array.get('text'))
     # filter_mapper.SetScalarRange(fields.default_min, fields.default_max)
 
-    model_data.filter_actor.SetMapper(filter_mapper)
-    renderer.AddActor(model_data.filter_actor)
+    filter_actor.SetMapper(filter_mapper)
+    renderer.AddActor(filter_actor)
 
     lut = vtkLookupTable()
     lut.SetHueRange(0.667, 0)
-    lut.SetRange(*scalar_range)
+    lut.SetRange(scalar_range)
     lut.Build()
 
     filter_mapper.SetLookupTable(lut)
 
     mesh_mapper = vtkDataSetMapper()
-    mesh_mapper.SetInputData(model_data.vtk_grid)
+    mesh_mapper.SetInputData(model_store.vtk_grid)
     mesh_mapper.SetScalarVisibility(0)
 
-    model_data.mesh_actor.SetMapper(mesh_mapper)
-    renderer.AddActor(model_data.mesh_actor)
+    mesh_actor.SetMapper(mesh_mapper)
+    renderer.AddActor(mesh_actor)
 
     scalar_bar = create_scalar_bar_actor(filter_mapper, scalar_range, "u [m]")
     renderer.AddActor2D(scalar_bar)

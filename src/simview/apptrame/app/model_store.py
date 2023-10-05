@@ -38,15 +38,17 @@ class Fields:
 @dataclass
 class MeshSource:
     blob: BlobFile
-    fields: Fields
 
 
 @dataclass
 class ModelDataStore:
     server: Server
+
+    mesh_source: MeshSource = None
+    fields: Fields = None
+
     vtk_grid: vtkDataObject = field(default_factory=vtkUnstructuredGrid)
     files: dict[str, BlobFile] = field(default_factory=dict)
-    mesh_source: MeshSource = None
     filter_actor: vtkDataObject = field(default_factory=vtkActor)
     mesh_actor: vtkDataObject = field(default_factory=vtkActor)
 
@@ -77,7 +79,7 @@ class ModelDataStore:
         default_min, default_max = default_array.get("range")
 
         vtk_filter = vtkThreshold()
-        vtk_filter.SetInputData(self.vtk_grid)
+        vtk_filter.SetInputArrayToProcess(0, 0, 0, vtkDataObject.FIELD_ASSOCIATION_POINTS, default_array.get("text"))
 
         return Fields(
             datasets=dataset_arrays,
@@ -104,12 +106,12 @@ class ModelDataStore:
                 reader = vtkXMLUnstructuredGridReader()
                 reader.SetFileName(filepath)
                 reader.Update()
-                self.vtk_grid = reader.GetOutput()
+                self.vtk_grid.ShallowCopy(reader.GetOutput())
         finally:
             os.remove(filepath)  # Manually delete the file
 
-        fields = self._extract_fields()
-        self.mesh_source = MeshSource(blob=blob, fields=fields)
+        self.fields = self._extract_fields()
+        self.mesh_source = MeshSource(blob=blob)
 
     def load_files_from_storage_blob(self):
         container_client = azure.storage.blob.ContainerClient.from_connection_string(

@@ -6,6 +6,8 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.trame.ui import plotter_ui
 
+from simview.helpers import DATA_DIR
+
 # -----------------------------------------------------------------------------
 # Trame initialization
 # -----------------------------------------------------------------------------
@@ -22,7 +24,8 @@ ctrl.on_server_ready.add(ctrl.view_update)
 # Plotting
 # -----------------------------------------------------------------------------
 
-mesh = pv.Wavelet()
+# mesh = pv.Wavelet()
+mesh = pv.read(DATA_DIR / "Cantilever_CA_EIG_sh_modes.vtu")
 
 pl = pv.Plotter()
 actor = pl.add_mesh(mesh)
@@ -72,4 +75,4 @@ with SinglePageLayout(server) as layout:
             ctrl.view_update = view.update
 
 if __name__ == '__main__':
-    server.start()
+    server.start(port=8000)

@@ -1,5 +1,5 @@
 # Trame
 
-## Notes
 
-* Icon names https://pictogrammers.com/library/mdi/
+* Icon names from https://pictogrammers.com/library/mdi/
+* 

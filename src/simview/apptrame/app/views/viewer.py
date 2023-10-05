@@ -8,24 +8,21 @@ import vtkmodules.vtkRenderingOpenGL2  # noqa
 from trame.widgets import vtk as vtk_widgets, vuetify
 from trame_router.ui.router import RouterViewLayout
 
-from simview.apptrame.app.views.plotter import plotter_window
+from simview.apptrame.app.representation import create_render_window
+from simview.apptrame.app.views.graphs import plotter_window
 
 if TYPE_CHECKING:
     from simview.apptrame.app.main import App
 
 
 def content_routers(app: App):
+    render_window = create_render_window(app.model)
     with RouterViewLayout(app.server, "/"):
-        with vtk_widgets.VtkLocalView(app.render_window) as view:
-            app.ctrl.view_update.add(view.update)
-            app.ctrl.on_server_ready.add(view.update)
+        # view = vtk_widgets.VtkRemoteView(render_window)
+        with vtk_widgets.VtkLocalView(render_window) as view:
+            app.ctrl.view_update = view.update
+            # app.ctrl.view_reset_camera = view.reset_camera
+            # app.ctrl.on_server_ready.add(view.update)
 
     with RouterViewLayout(app.server, "/eigen"):
-        with vuetify.VCardText():
-            vuetify.VBtn("Take me back", click="$router.back()")
-        with vuetify.VRow(dense=True, style="height: 30%"):
-            plotter_window(app.ctrl)
-        with vuetify.VRow(dense=True, style="height: 70%"):
-            with vtk_widgets.VtkLocalView(app.render_window) as view:
-                app.ctrl.view_update.add(view.update)
-                app.ctrl.on_server_ready.add(view.update)
+        plotter_window(app.ctrl)

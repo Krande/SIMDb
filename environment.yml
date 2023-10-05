@@ -16,8 +16,10 @@ dependencies:
   - websockets
   - python-dotenv
   - azure-storage-blob
-  - python-chromedriver-binary
-  - selenium
+  - trimesh
+  - pyside6
+#  - python-chromedriver-binary
+#  - selenium
   - vtk
   - pytest
   - watchdog

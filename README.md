@@ -1,6 +1,6 @@
 # SIMDb - Simulation Database
 
-An attempt to host computational simulation data using databases.
+An attempt to host and visualize simulation data using open source databases and visualization frameworks.
 
 **Note:** This is a work in progress and is not yet ready for use.
 

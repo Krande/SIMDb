@@ -25,15 +25,6 @@ def toolbar_main(app: App):
                           click=f"utils.download('{curr_mesh.blob.name}', trigger('download_binary'), 'application/octet-stream')", ):
             vuetify.VIcon("mdi-download")
 
-    vuetify.VSlider(
-        hide_details=True,
-        v_model=("resolution", 6),
-        max=60,
-        min=3,
-        step=1,
-        style="max-width: 300px;",
-    )
-
     vuetify.VSwitch(
         hide_details=True,
         v_model=("$vuetify.theme.dark",),
