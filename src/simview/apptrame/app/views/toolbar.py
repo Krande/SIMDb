@@ -30,5 +30,5 @@ def toolbar_main(app: App):
         v_model=("$vuetify.theme.dark",),
     )
 
-    with vuetify.VBtn(icon=True, click="$refs.view.resetCamera()"):
+    with vuetify.VBtn(icon=True, click=app.ctrl.view_reset_camera):
         vuetify.VIcon("mdi-crop-free")

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import trame_server.controller
 import vtkmodules.vtkRenderingOpenGL2  # noqa
+
 # Required for rendering initialization, not necessary for
 # local rendering, but doesn't hurt to include it
 import vtkmodules.vtkRenderingOpenGL2  # noqa
@@ -23,6 +24,7 @@ from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid, vtkCellArray, vtk
 from vtkmodules.vtkFiltersCore import vtkThreshold
 from vtkmodules.vtkFiltersGeneral import vtkWarpVector
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
+
 # Add import for the rendering
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleSwitch  # noqa
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
@@ -124,6 +126,7 @@ def update_filter(threshold_range, **kwargs):
     vtk_filter.SetLowerThreshold(float_range[0])
     vtk_filter.SetUpperThreshold(float_range[1])
     vtk_filter.Update()
+
     lut.SetRange(*float_range)
     lut.Build()
 
@@ -271,7 +274,7 @@ def update_eigenmode(active_eigenmode, **kwargs):
     point_data_array = vtk_to_numpy(vtk_grid.GetPointData().GetArray(array_name))
 
     # Step 2: Calculate the magnitude
-    magnitude = np.sqrt(np.sum(point_data_array ** 2, axis=1))
+    magnitude = np.sqrt(np.sum(point_data_array**2, axis=1))
 
     # Step 3: Convert back to VTK array and add to vtkUnstructuredGrid
     magnitude_vtk = np2da(magnitude, name=magn_name)
@@ -331,11 +334,12 @@ def load_shell_model():
     except trame_server.controller.FunctionNotImplementedError:
         pass
 
-# load_solid_model()
+
+load_solid_model()
 # -----------------------------------------------------------------------------
 
 
-load_shell_model()
+# load_shell_model()
 
 with SinglePageLayout(server) as layout:
     layout.title.set_text("Mesh Viewer")
@@ -382,16 +386,14 @@ with SinglePageLayout(server) as layout:
     # Content ----------------------------------------
     with layout.content:
         with vuetify.VContainer(
-                fluid=True,
-                classes="pa-0 fill-height",
-                style="position: relative",
+            fluid=True,
+            classes="pa-0 fill-height",
+            style="position: relative",
         ):
             html_view = vtk.VtkLocalView(renderWindow)
             # html_view = vtk.VtkRemoteView(renderWindow)
             ctrl.view_update = html_view.update
             ctrl.view_reset_camera = html_view.reset_camera
-
-
 
 if __name__ == "__main__":
     server.start(port=5000)
