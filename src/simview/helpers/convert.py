@@ -15,7 +15,10 @@ def basic_convert(filepath):
         # RMED has 6xN DOF's vectors, but VTU has 3xN DOF's vectors
         new_fields = {}
         for key, field in mesh.point_data.items():
-            new_fields[key] = np.array_split(field, 2, axis=1)[0]
+            if field.shape[1] == 6:
+                new_fields[key] = np.array_split(field, 2, axis=1)[0]
+            else:
+                new_fields[key] = field
 
         mesh.point_data = new_fields
     else:
@@ -26,4 +29,4 @@ def basic_convert(filepath):
 
 
 if __name__ == "__main__":
-    basic_convert("../data/Cantilever_CA_EIG_solid.rmed")
+    basic_convert("../data/ca_param_model_ca.rmed")

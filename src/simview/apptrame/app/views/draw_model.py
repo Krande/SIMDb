@@ -8,6 +8,7 @@ from trame.widgets import vuetify
 
 from simview.apptrame.app.base import AppExtend
 from simview.apptrame.app.model_store import ModelDataStore
+from simview.apptrame.app.representation import update_representation
 from simview.apptrame.app.views.base_components import ui_card
 
 if TYPE_CHECKING:
@@ -33,10 +34,13 @@ class ModelUI(AppExtend):
 
         self.app.model = ModelDataStore(self.app.server)
         self.app.model.init()
-        self.app.local_view.replace_view(self.app.model.render_window)
-        # set_current_filter_array(self.app.model, self.app.model.fields.default_array.get("text"))
 
-        # self.app.model.renderer.ResetCamera()
+        self.app.local_view.replace_view(self.app.model.render_window)
+        self.app.ctrl.view_update = self.app.local_view.update
+        update_representation(self.app.model.mesh_actor, self.app.server.state.mesh_representation)
+        update_representation(self.app.model.filter_actor, self.app.server.state.filter_representation)
+        self.app.model.mesh_actor.GetProperty().SetOpacity(self.app.server.state.mesh_opacity)
+        self.app.model.filter_actor.GetProperty().SetOpacity(self.app.server.state.filter_opacity)
         self.app.ctrl.view_update()
 
     @trigger("download_binary")

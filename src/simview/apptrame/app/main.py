@@ -3,7 +3,7 @@ import os
 # Required for rendering initialization, not necessary for
 # local rendering, but doesn't hurt to include it
 import vtkmodules.vtkRenderingOpenGL2  # noqa
-from trame.app import get_server, logger
+from trame.app import get_server
 from trame.decorators import TrameApp, trigger, life_cycle
 from trame.widgets import vuetify, router
 from trame_vuetify.ui.vuetify import SinglePageWithDrawerLayout

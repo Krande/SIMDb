@@ -6,14 +6,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 from vtkmodules.numpy_interface.dataset_adapter import numpyTovtkDataArray as np2da
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonCore import vtkLookupTable
 from vtkmodules.vtkCommonDataModel import vtkDataObject
 from vtkmodules.vtkFiltersCore import vtkThreshold
 from vtkmodules.vtkFiltersGeneral import vtkWarpVector
-from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
-from vtkmodules.vtkRenderingCore import vtkDataSetMapper, vtkRenderer, vtkRenderWindow, vtkRenderWindowInteractor
+from vtkmodules.vtkRenderingCore import vtkDataSetMapper, vtkRenderer
 
 if TYPE_CHECKING:
     from simview.apptrame.app.model_store import ModelDataStore
