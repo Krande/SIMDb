@@ -121,7 +121,7 @@ def set_current_filter_array(model_store: ModelDataStore, array_name, num_range_
     scalar_range = vtk_filter.GetOutput().GetScalarRange()
     full_min, full_max = scalar_range
 
-    model_store.server.state.scalar_range = scalar_range
+    model_store.server.state.threshold_range = scalar_range
     model_store.server.state.full_min = full_min
     model_store.server.state.full_max = full_max
     model_store.server.state.range_step = (full_max - full_min) / num_range_steps
@@ -133,9 +133,6 @@ def set_current_filter_array(model_store: ModelDataStore, array_name, num_range_
     lut.Build()
 
     update_scalar_bar("u [m]", scalar_bar, full_max)
-
-
-
 
 
 def create_scalar_bar_actor(mapper):

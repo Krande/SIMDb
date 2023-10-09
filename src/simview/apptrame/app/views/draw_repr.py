@@ -29,45 +29,50 @@ class DrawUI(AppExtend):
     def update_mesh_representation(self, mesh_representation=3, **kwargs):
         update_representation(self.app.model.mesh_actor, mesh_representation)
         self.app.ctrl.view_update()
-        # print(f"{mesh_representation=}")
+        print(f"{mesh_representation=}")
 
     @change("filter_representation")
     def update_filter_representation(self, filter_representation=3, **kwargs):
         update_representation(self.app.model.filter_actor, filter_representation)
         self.app.ctrl.view_update()
-        # print(f"{filter_representation=}")
+        print(f"{filter_representation=}")
 
     @change("mesh_opacity")
     def update_mesh_opacity(self, mesh_opacity, **kwargs):
         self.app.model.mesh_actor.GetProperty().SetOpacity(mesh_opacity)
         self.app.ctrl.view_update()
-        # print(f"{mesh_opacity=}")
+        print(f"{mesh_opacity=}")
 
     @change("filter_opacity")
     def update_filter_opacity(self, filter_opacity, **kwargs):
         self.app.model.filter_actor.GetProperty().SetOpacity(filter_opacity)
         self.app.ctrl.view_update()
-        # print(f"{filter_opacity=}")
+        print(f"{filter_opacity=}")
 
-    @change("scalar_range")
-    def set_scalar_range(self, scalar_range=(-1, 1), **kwargs):
+    @change("threshold_range")
+    def set_scalar_range(self, threshold_range=(-1, 1), **kwargs):
         fields = self.app.model.fields
 
-        if scalar_range is None:
-            scalar_range = fields.default_min, fields.default_max
+        if threshold_range is None:
+            threshold_range = fields.default_min, fields.default_max
 
         filter_mapper = self.app.model.filter_actor.GetMapper()
         vtk_filter = self.app.model.fields.vtk_filter
+        steps = 50
 
-        # print("set_scalar_range", scalar_range)
-        filter_mapper.SetScalarRange(*scalar_range)  # Comment if you want to have a fix color range
+        field_min, field_max = threshold_range
+        filter_mapper.SetScalarRange(field_min, field_max)  # Comment if you want to have a fix color range
+        vtk_filter.SetLowerThreshold(field_min)
 
-        vtk_filter.SetLowerThreshold(scalar_range[0])
-        vtk_filter.SetUpperThreshold(scalar_range[1])
+        if abs(field_max - self.app.state.full_max) < 1/steps:
+            # Set the upper threshold to a very large number if the max value is close to the default max value
+            vtk_filter.SetUpperThreshold(9e20)
+        else:
+            vtk_filter.SetUpperThreshold(field_max)
         vtk_filter.Update()
 
         lut = filter_mapper.GetLookupTable()
-        lut.SetRange(scalar_range)
+        lut.SetRange(field_min, field_max)
         lut.Build()
 
         self.app.ctrl.view_update()
@@ -91,7 +96,7 @@ class DrawUI(AppExtend):
             self.app.model.fields.warp_vector.SetScaleFactor(current_warp_scale)  # Set the scale factor as needed
             self.app.ctrl.view_update()
             # print(f"{current_warp_scale=}")
-            await asyncio.sleep(1/15)
+            await asyncio.sleep(1 / 15)
 
     @trigger("stop_animation")
     @asynchronous.task
@@ -176,7 +181,7 @@ def representation_drawer(app: App):
                 thumb_size=16,
                 thumb_label=True,
                 label="Threshold",
-                v_model=("scalar_range", [0, 300]),
+                v_model=("threshold_range", [0, 300]),
                 min=("full_min", -1),
                 max=("full_max", 1),
                 step=("range_step", 1),
@@ -197,7 +202,7 @@ def representation_drawer(app: App):
                 hide_details=True,
                 dense=True,
             )
-            with vuetify.VBtn(click=("start_animation", )):
+            with vuetify.VBtn(click=("start_animation",)):
                 vuetify.VIcon("mdi-play")
-            with vuetify.VBtn(click=("stop_animation", )):
+            with vuetify.VBtn(click=("stop_animation",)):
                 vuetify.VIcon("mdi-stop")
